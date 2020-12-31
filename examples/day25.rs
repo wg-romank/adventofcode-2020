@@ -2,20 +2,9 @@ use std::collections::HashMap;
 
 use mod_exp::mod_exp;
 
-fn loop_steps(loop_size: u64, input: u64) -> u64 {
-    let mut result = 1;
-    for _ in 0..loop_size {
-        result *= input;
-        result %= 20201227;
-    }
-
-    result
-}
-
-fn baby_step_giant_step(beta: u64, a: u64) -> u64 {
+fn baby_step_giant_step(beta: u64, a: u64, n: u64) -> u64 {
     // Reference https://en.wikipedia.org/wiki/Baby-step_giant-step
-    let n = 20201227;
-    let m = (20201227 as f32).sqrt().ceil() as u64; // modulus is group order
+    let m = (n as f64).sqrt().ceil() as u64; // modulus is group order
 
     let mut lookup = HashMap::new();
 
@@ -43,25 +32,22 @@ fn baby_step_giant_step(beta: u64, a: u64) -> u64 {
 
 fn main() {
     let subj = 7;
+    let n = 20201227;
+
     let door_pubkey = 8252394;
     let card_pubkey = 6269621;
 
-    let door_loop = baby_step_giant_step(door_pubkey, subj);
+    let door_loop = baby_step_giant_step(door_pubkey, subj, n);
 
     println!("door loop {}", door_loop);
 
-    assert_eq!(door_pubkey, loop_steps(door_loop, subj));
+    assert_eq!(door_pubkey, mod_exp(subj, door_loop, n));
 
-    println!("encryption key {}", loop_steps(door_loop, card_pubkey))
-}
-
-#[test]
-fn test_loop_steps() {
-    assert_eq!(5764801, loop_steps(8, 7));
+    println!("encryption key {}", mod_exp(card_pubkey, door_loop, n));
 }
 
 #[test]
 fn test_find_loop_size() {
-    let loop_size = baby_step_giant_step(5764801, 7);
+    let loop_size = baby_step_giant_step(5764801, 7, 20201227);
     assert_eq!(8, loop_size);
 }
