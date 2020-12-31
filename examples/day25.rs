@@ -1,45 +1,67 @@
-fn loop_steps(loop_size: u8, subj: u32) -> u32 {
+use std::collections::HashMap;
+
+use mod_exp::mod_exp;
+
+fn loop_steps(loop_size: u64, input: u64) -> u64 {
     let mut result = 1;
     for _ in 0..loop_size {
-        result *= subj;
+        result *= input;
         result %= 20201227;
     }
 
     result
 }
 
-fn find_loop_size(pubkey1: u32, pubkey2: u32) -> (u8, u8, u32) {
-    let mut subj = 2;
-    let mut loop1 = 1;
-    let mut loop2 = 2;
+fn baby_step_giant_step(beta: u64, a: u64) -> u64 {
+    // Reference https://en.wikipedia.org/wiki/Baby-step_giant-step
+    let n = 20201227;
+    let m = (20201227 as f32).sqrt().ceil() as u64; // modulus is group order
 
-    // loop1 != loop2
-    // first assuming loop is u8 which might not be the case here
+    let mut lookup = HashMap::new();
 
-    loop {
-        // todo: walk?
-
-        if loop_steps(loop1, subj) == pubkey1 && loop_steps(loop2, subj) == pubkey2 {
-            break
-        }
+    for j in 0..m {
+        lookup.insert(mod_exp(a, j, n), j);
     }
 
-    (loop1, loop2, subj)
+    // a ^ m (n - 2) = a ^ mn * a ^ -2m = a ^ m * a ^ -2m = a ^ -m
+    // a ^ n == a (mod n), Fermat little theorem
+    // https://en.wikipedia.org/wiki/Fermat%27s_little_theorem
+    let a_m = mod_exp(a, m * (n - 2), n);
+
+    let mut gamma = beta; // member of the group
+    for i in 0..m {
+        if let Some(j) = lookup.get(&gamma) {
+            return (i * m + j) % n
+        }
+
+        gamma = (gamma * a_m) % n;
+    }
+
+    panic!("Not found exponent for {}", beta);
 }
 
 
 fn main() {
+    let subj = 7;
     let door_pubkey = 8252394;
     let card_pubkey = 6269621;
 
-    let (door_loop, card_loop, subj) = find_loop_size(door_pubkey, card_pubkey);
+    let door_loop = baby_step_giant_step(door_pubkey, subj);
 
-    println!("door loop {} card loop {} subject {}", door_loop, card_loop, subj);
+    println!("door loop {}", door_loop);
 
-    println!("encryption key {}", loop_steps(door_loop, door_pubkey))
+    assert_eq!(door_pubkey, loop_steps(door_loop, subj));
+
+    println!("encryption key {}", loop_steps(door_loop, card_pubkey))
 }
 
 #[test]
 fn test_loop_steps() {
     assert_eq!(5764801, loop_steps(8, 7));
+}
+
+#[test]
+fn test_find_loop_size() {
+    let loop_size = baby_step_giant_step(5764801, 7);
+    assert_eq!(8, loop_size);
 }
