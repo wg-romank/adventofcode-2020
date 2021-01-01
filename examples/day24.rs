@@ -33,7 +33,7 @@ enum Direction {
 }
 
 impl Direction {
-    fn string_to_char(directions: &str) -> String {
+    fn preprocess_directions(directions: &str) -> String {
         directions.replace(
             "se", "!"
         ).replace(
@@ -65,7 +65,7 @@ impl CubeCoordinates {
         CubeCoordinates { x, y, z }
     }
 
-    fn move_to(self, direction: Direction) -> CubeCoordinates {
+    fn move_to(&self, direction: Direction) -> CubeCoordinates {
         use Direction::*;
         CubeCoordinates::new(
             match direction {
@@ -82,32 +82,32 @@ impl CubeCoordinates {
 
 fn main() {
     let instructions = std::fs::read_to_string("inputs/input24").unwrap();
-    let mut visited_tiles: HashMap<CubeCoordinates, TileColor> = HashMap::new();
-
-    // key - field representation
-    let reference_coordinate = CubeCoordinates::new((0, 0, 0));
 
     let mut black_tiles = 0;
+    let mut visited_tiles: HashMap<CubeCoordinates, TileColor> = HashMap::new();
 
     for i in instructions.lines() {
-        let processed = Direction::string_to_char(i);
-        let mut cur = reference_coordinate.clone();
-        for c in processed.chars() {
-            let dir = Direction::from_char(c);
-            cur = cur.move_to(dir);
+        let processed = Direction::preprocess_directions(i);
 
-            if let Some(color) = visited_tiles.get(&cur) {
-                if *color == TileColor::Black {
-                    black_tiles -= 1;
-                }
+        let cur = processed
+            .chars()
+            .fold(
+                CubeCoordinates::new((0, 0, 0)),
+                |acc, c| acc.move_to(Direction::from_char(c))
+            );
 
-                visited_tiles.insert(cur.clone(), color.flip());
-            } else {
-                visited_tiles.insert(cur.clone(), TileColor::Black);
-                black_tiles += 1;
+        if let Some(color) = visited_tiles.get(&cur) {
+            if *color == TileColor::Black {
+                black_tiles -= 1;
             }
+
+            visited_tiles.insert(cur.clone(), color.flip());
+        } else {
+            visited_tiles.insert(cur.clone(), TileColor::Black);
+            black_tiles += 1;
         }
     }
 
     println!("black tiles {}", black_tiles);
+    println!("visited tiles {}", visited_tiles.len());
 }
