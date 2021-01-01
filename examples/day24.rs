@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use std::sync::mpsc::RecvTimeoutError::Timeout;
 
 #[derive(Clone, PartialEq)]
 enum TileColor {
@@ -65,7 +66,7 @@ impl CubeCoordinates {
         CubeCoordinates { x, y, z }
     }
 
-    fn move_to(&self, direction: Direction) -> CubeCoordinates {
+    fn move_to(&self, direction: &Direction) -> CubeCoordinates {
         use Direction::*;
         CubeCoordinates::new(
             match direction {
@@ -78,6 +79,45 @@ impl CubeCoordinates {
             }
         )
     }
+
+    fn neighbours(&self) -> Vec<CubeCoordinates> {
+        use Direction::*;
+        [E, SE, SW, W, NW, NE]
+            .iter()
+            .map(|v| self.move_to(v))
+            .collect()
+    }
+}
+
+fn convay(visited_tiles: HashMap<CubeCoordinates, TileColor>) -> HashMap<CubeCoordinates, TileColor>{
+    let mut result= visited_tiles.iter().fold(HashMap::new()|acc, (c, tile)| {
+       if *tile == TileColor::Black {
+           acc.insert(c, tile)
+       } else {
+           acc
+       }
+    });
+
+    let mut pool = HashMap::new();
+    let mut seen = HashSet::new();
+
+    while !pool.is_empty() {
+        let black_neighbours=  coordinates
+            .neighbours()
+            .iter()
+            .flat_map(|n| visited_tiles.get(n).or(Some(&TileColor::White)))
+            .filter(|c| **c == TileColor::Black)
+            .count();
+
+        let new_tile_color = match color {
+            TileColor::Black => if black_neighbours == 0 || black_neighbours > 2 { TileColor::White } else { TileColor::Black },
+            TileColor::White => if black_neighbours == 2 { TileColor::Black } else { TileColor::White },
+        };
+
+        result.insert(coordinates.clone(), new_tile_color);
+    }
+
+    result
 }
 
 fn main() {
@@ -93,7 +133,7 @@ fn main() {
             .chars()
             .fold(
                 CubeCoordinates::new((0, 0, 0)),
-                |acc, c| acc.move_to(Direction::from_char(c))
+                |acc, c| acc.move_to(&Direction::from_char(c))
             );
 
         if let Some(color) = visited_tiles.get(&cur) {
