@@ -16,7 +16,7 @@ impl TileColor {
     }
 }
 
-#[derive(Clone, PartialEq, Eq, Hash)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 struct CubeCoordinates {
     x: i32,
     y: i32,
@@ -69,12 +69,12 @@ impl CubeCoordinates {
         use Direction::*;
         CubeCoordinates::new(
             match direction {
-                E => (self.x - 1, self.y + 1, self.z),
-                SE => (self.x - 1, self.y, self.z + 1),
-                SW => (self.x, self.y - 1, self.z + 1),
-                W => (self.x + 1, self.y - self.z, self.z),
-                NW => (self.x + 1, self.y, self.z - 1),
-                NE => (self.x, self.y + 1, self.z - 1),
+                E => (self.x + 1, self.y - 1, self.z),
+                SE => (self.x, self.y - 1, self.z + 1),
+                SW => (self.x - 1, self.y, self.z + 1),
+                W => (self.x - 1, self.y + 1, self.z),
+                NW => (self.x, self.y + 1, self.z - 1),
+                NE => (self.x + 1, self.y, self.z - 1),
             }
         )
     }
@@ -109,5 +109,4 @@ fn main() {
     }
 
     println!("black tiles {}", black_tiles);
-    println!("visited tiles {}", visited_tiles.len());
 }
