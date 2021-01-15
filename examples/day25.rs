@@ -6,11 +6,9 @@ fn baby_step_giant_step(beta: u64, a: u64, n: u64) -> u64 {
     // Reference https://en.wikipedia.org/wiki/Baby-step_giant-step
     let m = (n as f64).sqrt().ceil() as u64; // modulus is group order
 
-    let mut lookup = HashMap::new();
-
-    for j in 0..m {
-        lookup.insert(mod_exp(a, j, n), j);
-    }
+    let lookup = (0..m)
+        .map(|j| (mod_exp(a, j, n), j))
+        .collect::<HashMap<u64, u64>>();
 
     // a ^ m (n - 2) = a ^ mn * a ^ -2m = a ^ m * a ^ -2m = a ^ -m
     // a ^ n == a (mod n), Fermat little theorem
