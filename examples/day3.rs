@@ -29,7 +29,7 @@ impl Field {
         Field { field }
     }
 
-    fn move_slope(&mut self, times_r: usize, times_d: usize) -> u32 {
+    fn move_slope(&self, times_r: usize, times_d: usize) -> u32 {
         let mut trees_met = 0;
         let mut indexI = 0;
         let mut indexJ = 0;
@@ -52,7 +52,7 @@ fn main() {
 
     let strings = input.split('\n').collect::<Vec<&str>>();
 
-    let mut f = Field::new(strings);
+    let f = Field::new(strings);
 
     let trees_3_1 = f.move_slope(3, 1);
     let trees_1_1 = f.move_slope(1, 1);
