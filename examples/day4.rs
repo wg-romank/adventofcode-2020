@@ -56,12 +56,14 @@ impl ExpireYear {
     }
 }
 
-struct HairColor([char; 1]);
+struct HairColor<'a>(&'a str);
 
-impl HairColor {
-    fn from_str(str: &str) -> Option<Self> {
-        // str.matches("[0-9a-f]{6}")
-        Some(HairColor(['a']))
+use regex;
+
+impl<'a> HairColor<'a> {
+    fn from_str(str: &'a str) -> Option<Self> {
+        let p = regex::Regex::new(r"[#][0-9a-f]{6}").unwrap();
+        p.find(str).map(|_| HairColor(str))
     }
 }
 
@@ -103,17 +105,17 @@ impl PassportID {
     }
 }
 
-struct Passport {
+struct Passport<'a> {
     byr: Option<BirthYear>,
     iyr: Option<IssueYear>,
     eyr: Option<ExpireYear>,
     hgt: Option<Height>,
-    hcl: Option<HairColor>,
+    hcl: Option<HairColor<'a>>,
     ecl: Option<EyeColor>,
     pid: Option<PassportID>,
 }
 
-impl Passport {
+impl<'a> Passport<'a> {
     fn new() -> Self {
         Passport {
             byr: None,
@@ -136,7 +138,7 @@ impl Passport {
             self.pid.is_some()
     }
 
-    fn from_new_line(l: &str) -> Self {
+    fn from_new_line(l: &'a str) -> Self {
         l
             .split(&[' ', '\n'][..])
             .filter(|s| !s.is_empty())
@@ -159,7 +161,7 @@ impl Passport {
             })
     }
 
-    fn from_lines<'a>(lines: impl Iterator<Item=&'a str>) -> Vec<Passport> {
+    fn from_lines(lines: impl Iterator<Item=&'a str>) -> Vec<Passport<'a>> {
         lines.into_iter().map(
             |next| Passport::from_new_line(next)
         ).collect()
