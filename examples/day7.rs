@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 struct CanContain<'a> {
@@ -8,45 +9,49 @@ struct CanContain<'a> {
 
 impl<'a> CanContain<'a> {
     fn from_str(str: &'a str) -> Option<Self> {
-        // todo: fix issue taking 1st word of color only
         let (amount_raw, color_raw): (&str, &str) = str.splitn(2, ' ').next_tuple()?;
         let amount = amount_raw.parse::<u8>().ok()?;
-        let color = color_raw.trim_end_matches(" bags.");
+        let color = color_raw
+            .trim_end_matches(" bags")
+            .trim_end_matches(" bag");
 
         Some(CanContain { color, amount })
     }
 }
 
 #[derive(Debug)]
-struct Rule<'a> {
-    color: &'a str,
-    can_contain: Vec<CanContain<'a>>,
+struct RuleSet<'a> {
+    rules: HashMap<&'a str, Vec<CanContain<'a>>>,
 }
 
-impl<'a> Rule<'a> {
-    fn from_str(str: &'a str) -> Option<Self> {
-        let (color, contain) = str
-            .split("bags contain")
-            .map(|str| str.trim())
-            .next_tuple()?;
+impl<'a> RuleSet<'a> {
+    fn from_str(rules_raw: &'a str) -> Self {
+        RuleSet {
+            rules: rules_raw
+                .split('\n')
+                .filter(|str| !str.is_empty())
+                .flat_map(|str| {
+                    let (color, contain) = str
+                        .split("bags contain")
+                        .map(|str| str.trim())
+                        .next_tuple()?;
 
-        let can_contain = contain
-            .split("bags,")
-            .flat_map(CanContain::from_str)
-            .collect::<Vec<CanContain<'a>>>();
+                    let can_contain = contain
+                        .split(&[',', '.'][..])
+                        .filter(|str| !str.is_empty())
+                        .flat_map(CanContain::from_str)
+                        .collect::<Vec<CanContain>>();
 
-        Some(Rule { color, can_contain })
+                    Some((color, can_contain))
+                }).collect()
+        }
     }
 }
 
 fn main() {
     let inputs = std::fs::read_to_string("inputs/input7").unwrap();
 
-    let rules = inputs
-        .split('\n')
-        .filter(|str| !str.is_empty())
-        .flat_map(Rule::from_str)
-        .collect::<Vec<Rule>>();
+    let rules = RuleSet::from_str(inputs.as_str());
 
     println!("rules {:#?}", rules);
 }
