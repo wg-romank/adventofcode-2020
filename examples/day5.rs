@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 fn binary_search(row: &str, low: u16, high: u16) -> u16 {
     row.chars().fold((low, high), |(low, high), c| {
         match c {
@@ -29,17 +31,13 @@ fn main() {
     let max_id = ids.last();
     println!("max_id {:#?}", max_id);
 
-    let my_id = ids[3..].into_iter().fold(([ids[0], ids[1], ids[3]], None), |(acc, _), &next| {
-       if acc[0] != acc[1] + 1 {
-           println!("{:#?}", acc);
-           (acc, Some(acc[1]))
-       } else if acc[1] != acc[2] + 1 {
-           println!("{:#?}", acc);
-           (acc, Some(acc[2]))
-       } else {
-           ([acc[1], acc[2], next], None)
-       }
-    }).1;
+    let r = (*ids.first().unwrap() .. *ids.last().unwrap());
+    let idd = ids.into_iter().collect::<HashSet<u16>>();
 
-    println!("my id {:#?}", my_id);
+    let missing = r.fold(Vec::<u16>::new(), |mut acc, m| {
+        if !idd.contains(&m) { acc.push(m) };
+        acc
+    });
+
+    println!("my id {:#?}", missing);
 }
