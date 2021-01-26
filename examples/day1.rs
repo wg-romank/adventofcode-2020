@@ -1,9 +1,11 @@
+use std::str::FromStr;
+
 // Dumb but working
 fn main() {
     let inputs = std::fs::read_to_string("inputs/input1")
         .unwrap()
         .split('\n')
-        .flat_map(|n| n.parse::<u32>())
+        .flat_map(FromStr::from_str)
         .collect::<Vec<u32>>();
 
     for &i in inputs.iter() {

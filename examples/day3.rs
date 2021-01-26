@@ -22,9 +22,9 @@ struct Field {
 
 impl Field {
     fn new(strings: Vec<&str>) -> Self {
-        let field = strings.into_iter().map(|str| {
-            str.chars().map(|c| Tile::from_char(c)).collect::<Vec<Tile>>()
-        }).collect::<Vec<Vec<Tile>>>();
+        let field = strings.into_iter().map(|str|
+            str.chars().map(Tile::from_char).collect::<Vec<Tile>>()
+        ).collect::<Vec<Vec<Tile>>>();
 
         Field { field }
     }

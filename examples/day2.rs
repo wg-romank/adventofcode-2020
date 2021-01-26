@@ -9,9 +9,9 @@ fn policy_maker(policy: &str, str: &str) -> Option<(bool, bool)> {
     let times_low_i = times_low.parse::<usize>().ok()?;
     let times_high_i = times_high.parse::<usize>().ok()?;
 
-    let count = str.chars().fold(0, |acc, next| {
+    let count = str.chars().fold(0, |acc, next|
         if next == letter_char { acc + 1 } else { acc }
-    });
+    );
 
     let rule1 = times_low_i <= count && count <= times_high_i;
     let rule2 =
@@ -40,7 +40,7 @@ fn main() {
 
     let (count1, count2) = parsed_inputs
         .into_iter()
-        .flat_map(|str| is_valid_password(str))
+        .flat_map(is_valid_password)
         .fold((0, 0), |(acc_a, acc_b), (a, b)| match (a, b) {
             (true, true) => (acc_a + 1, acc_b + 1),
             (false, true) => (acc_a, acc_b + 1),

@@ -29,7 +29,7 @@ impl BirthYear {
         str.parse::<u16>()
             .ok()
             .filter(|&value| value >= 1920 && value <= 2002)
-            .map(|value| BirthYear(value))
+            .map(BirthYear)
     }
 }
 
@@ -40,7 +40,7 @@ impl IssueYear {
         str.parse::<u16>()
             .ok()
             .filter(|&value| value >= 2010 && value <= 2020)
-            .map(|value| IssueYear(value))
+            .map(IssueYear)
     }
 }
 
@@ -52,7 +52,7 @@ impl ExpireYear {
         str.parse::<u16>()
             .ok()
             .filter(|&value| value >= 2020 && value <= 2030)
-            .map(|value| ExpireYear(value))
+            .map(ExpireYear)
     }
 }
 
@@ -162,9 +162,7 @@ impl<'a> Passport<'a> {
     }
 
     fn from_lines(lines: impl Iterator<Item=&'a str>) -> Vec<Passport<'a>> {
-        lines.into_iter().map(
-            |next| Passport::from_new_line(next)
-        ).collect()
+        lines.into_iter().map(Passport::from_new_line).collect()
     }
 }
 

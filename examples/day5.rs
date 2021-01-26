@@ -24,8 +24,8 @@ fn main() {
 
     let mut ids = inputs
         .split('\n')
-        .filter(|&str| { !str.is_empty() })
-        .map(|str| { seat_id(str) }).collect::<Vec<u16>>();
+        .filter(|&str| !str.is_empty())
+        .map(seat_id).collect::<Vec<u16>>();
     ids.sort();
 
     let max_id = ids.last();
@@ -34,6 +34,7 @@ fn main() {
     let r = (*ids.first().unwrap() .. *ids.last().unwrap());
     let idd = ids.into_iter().collect::<HashSet<u16>>();
 
+    // todo: move acc instead of mutating
     let missing = r.fold(Vec::<u16>::new(), |mut acc, m| {
         if !idd.contains(&m) { acc.push(m) };
         acc
