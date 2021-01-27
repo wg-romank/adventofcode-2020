@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 struct CanContain<'a> {
@@ -15,7 +15,7 @@ impl<'a> CanContain<'a> {
             .trim_end_matches(" bags")
             .trim_end_matches(" bag");
 
-        Some(CanContain { color, amount })
+        Some(CanContain { color , amount })
     }
 }
 
@@ -30,21 +30,54 @@ impl<'a> RuleSet<'a> {
             rules: rules_raw
                 .split('\n')
                 .filter(|str| !str.is_empty())
-                .flat_map(|str| {
-                    let (color, contain) = str
-                        .split("bags contain")
-                        .map(|str| str.trim())
-                        .next_tuple()?;
+                .flat_map(
+                    |str| {
+                        let (color, contain) = str
+                            .split("bags contain")
+                            .map(|str| str.trim())
+                            .next_tuple()?;
 
-                    let can_contain = contain
-                        .split(&[',', '.'][..])
-                        .filter(|str| !str.is_empty())
-                        .flat_map(CanContain::from_str)
-                        .collect::<Vec<CanContain>>();
+                        let can_contain = contain
+                            .split(&[',', '.'][..])
+                            .map(|str| str.trim())
+                            .filter(|str| !str.is_empty())
+                            .filter(|str| !str.starts_with("no"))
+                            .flat_map(CanContain::from_str)
+                            .collect::<Vec<CanContain>>();
 
-                    Some((color, can_contain))
-                }).collect()
+                        Some((color, can_contain))
+                    })
+                .collect()
         }
+    }
+}
+
+fn find_can_contain<'a>(rule_set: &RuleSet<'a>, color: &str) -> Vec<&'a str> {
+    rule_set
+        .rules
+        .iter()
+        .filter(
+            |(_, r)|
+                r.iter().filter(|&c| c.color == color).count() > 0)
+        .map(|(&color, _)| color)
+        .collect::<Vec<&str>>()
+}
+
+fn find_ways<'a>(rule_set: &'a RuleSet<'a>, color: &str, outer_colors: HashSet<&'a str>) -> HashSet<&'a str> {
+    let ways = find_can_contain(rule_set, color);
+    let new_outer_colors: HashSet<&str> =
+        outer_colors
+            .iter().map(|&c| c)
+            .chain(ways.iter().map(|&c| c))
+            .collect();
+
+    if ways.len() == 0 {
+        outer_colors.clone()
+    } else {
+        ways
+            .iter()
+            .map(|&c| find_ways(rule_set, c, new_outer_colors.clone()))
+            .fold(HashSet::new(), |acc, n| acc.union(&n).copied().collect())
     }
 }
 
@@ -53,5 +86,7 @@ fn main() {
 
     let rules = RuleSet::from_str(inputs.as_str());
 
-    println!("rules {:#?}", rules);
+    let ways = find_ways(&rules, "shiny gold", HashSet::new());
+
+    println!("ways {:#?}", ways.len());
 }
