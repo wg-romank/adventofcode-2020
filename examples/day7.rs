@@ -15,7 +15,7 @@ impl<'a> CanContain<'a> {
             .trim_end_matches(" bags")
             .trim_end_matches(" bag");
 
-        Some(CanContain { color , amount })
+        Some(CanContain { color, amount })
     }
 }
 
@@ -65,15 +65,15 @@ fn find_can_contain<'a>(rule_set: &RuleSet<'a>, color: &str) -> Vec<&'a str> {
 
 fn find_ways<'a>(rule_set: &'a RuleSet<'a>, color: &str, outer_colors: HashSet<&'a str>) -> HashSet<&'a str> {
     let ways = find_can_contain(rule_set, color);
-    let new_outer_colors: HashSet<&str> =
+    if ways.len() == 0 {
         outer_colors
-            .iter().map(|&c| c)
-            .chain(ways.iter().map(|&c| c))
+    } else {
+        let new_outer_colors: HashSet<&str> = outer_colors
+            .iter()
+            .chain(ways.iter())
+            .map(|&c| c)
             .collect();
 
-    if ways.len() == 0 {
-        outer_colors.clone()
-    } else {
         ways
             .iter()
             .map(|&c| find_ways(rule_set, c, new_outer_colors.clone()))
