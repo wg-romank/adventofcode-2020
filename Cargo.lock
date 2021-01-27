@@ -7,6 +7,7 @@ dependencies = [
  "itertools",
  "mod_exp",
  "regex",
+ "tramp",
 ]
 
 [[package]]
@@ -150,3 +151,9 @@ checksum = "d8208a331e1cb318dd5bd76951d2b8fc48ca38a69f5f4e4af1b6a9f8c6236915"
 dependencies = [
  "once_cell",
 ]
+
+[[package]]
+name = "tramp"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1ee032eda9f2e819b93fed2bbb2ea4e459b78cd0141b9e3644ec6dc013b2cf4"
