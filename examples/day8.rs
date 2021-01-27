@@ -1,25 +1,51 @@
 use std::collections::HashSet;
 
-fn compute_acc(instructions: &Vec<&str>, idx: usize, mut visited: HashSet<usize>, acc: i32) -> i32 {
+fn nop(_x: &str, idx: usize, acc: i32) -> (usize, i32) {
+    (idx + 1, acc)
+}
+
+fn acc(x: &str, idx: usize, acc: i32) -> (usize, i32) {
+    let v = x.split(" ").last().map(|i| i.parse::<i32>().ok()).flatten().unwrap();
+    (idx + 1, acc + v)
+}
+
+fn jmp(x: &str, idx: usize, acc: i32) -> (usize, i32) {
+    let v = x.split(" ").last().map(|i| i.parse::<i32>().ok()).flatten().unwrap();
+    ((idx as i32 + v) as usize, acc)
+}
+
+fn compute_acc(instructions: &Vec<&str>, idx: usize, swap_idx: usize, mut visited: HashSet<usize>, ac: i32) -> Result<i32, i32> {
     if visited.contains(&idx) {
-        acc
+        Err(ac)
+    } else if idx > instructions.len() - 2 {
+        Ok(ac)
     } else {
         visited.insert(idx);
         let (next_idx, next_acc) = match instructions[idx] {
-            x if x.starts_with("nop") => (idx + 1, acc),
-            x if x.starts_with("acc") => {
-                let v = x.split(" ").last().map(|i| i.parse::<i32>().ok()).flatten().unwrap();
-                (idx + 1, acc + v)
-            },
-            x if x.starts_with("jmp") => {
-                let v = x.split(" ").last().map(|i| i.parse::<i32>().ok()).flatten().unwrap();
-                ((idx as i32 + v) as usize, acc)
-            },
+            x if x.starts_with("nop") => if idx != swap_idx { nop(x, idx, ac) } else { jmp(x, idx, ac) },
+            x if x.starts_with("acc") => acc(x, idx, ac),
+            x if x.starts_with("jmp") => if idx != swap_idx { jmp(x, idx, ac) } else { nop(x, idx, ac) },
             other => panic!("unknown instruction {}", other),
         };
 
-        compute_acc(instructions, next_idx, visited, next_acc)
+        compute_acc(instructions, next_idx, swap_idx, visited, next_acc)
     }
+}
+
+fn fix_corrupted_instruction(instructions: &Vec<&str>) -> Option<i32> {
+    let indices_to_try = instructions
+        .iter()
+        .enumerate()
+        .filter_map(|(idx, &v)| {
+            if v.starts_with("nop") || v.starts_with("jmp") { Some(idx) } else { None }
+        }).collect::<Vec<usize>>();
+
+    indices_to_try.iter().fold(None, |acc, &idx| {
+        match compute_acc(instructions, 0, idx, HashSet::new(), 0) {
+            Ok(v) => Some(v),
+            Err(_) => acc
+        }
+    })
 }
 
 
@@ -28,5 +54,6 @@ fn main() {
 
     let instructions = input.split('\n').collect();
 
-    println!("acc value {}", compute_acc(&instructions, 0, HashSet::new(), 0));
+    println!("acc value {:#?}", compute_acc(&instructions, 0, usize::max_value(), HashSet::new(), 0));
+    println!("acc value fixed {:#?}", fix_corrupted_instruction(&instructions));
 }
