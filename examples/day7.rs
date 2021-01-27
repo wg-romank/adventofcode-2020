@@ -81,12 +81,28 @@ fn find_ways<'a>(rule_set: &'a RuleSet<'a>, color: &str, outer_colors: HashSet<&
     }
 }
 
-fn main() {
-    let inputs = std::fs::read_to_string("inputs/input7").unwrap();
+fn find_bags_to_stuff_in<'a>(rule_set: &RuleSet, color: &str) -> u32 {
+    if let Some(inner) = rule_set.rules.get(color) {
+        if !inner.is_empty() {
+            inner
+                .iter()
+                .map(|cc| cc.amount as u32 * find_bags_to_stuff_in(rule_set, cc.color))
+                .sum::<u32>() + 1
+        } else {
+            1
+        }
+    } else {
+        1
+    }
+}
 
+fn main() {
+    let color = "shiny gold";
+    let inputs = std::fs::read_to_string("inputs/input7").unwrap();
     let rules = RuleSet::from_str(inputs.as_str());
 
-    let ways = find_ways(&rules, "shiny gold", HashSet::new());
-
+    let ways = find_ways(&rules, color, HashSet::new());
     println!("ways {:#?}", ways.len());
+
+    println!("stuffed {:#?}", find_bags_to_stuff_in(&rules, color) - 1);
 }
