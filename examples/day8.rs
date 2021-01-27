@@ -33,18 +33,13 @@ fn compute_acc(instructions: &Vec<&str>, idx: usize, swap_idx: usize, mut visite
 }
 
 fn fix_corrupted_instruction(instructions: &Vec<&str>) -> Option<i32> {
-    let indices_to_try = instructions
-        .iter()
-        .enumerate()
-        .filter_map(|(idx, &v)| {
-            if v.starts_with("nop") || v.starts_with("jmp") { Some(idx) } else { None }
-        }).collect::<Vec<usize>>();
-
-    indices_to_try.iter().fold(None, |acc, &idx| {
-        match compute_acc(instructions, 0, idx, HashSet::new(), 0) {
-            Ok(v) => Some(v),
-            Err(_) => acc
-        }
+    instructions.iter().enumerate().fold(None, |acc, (idx, &v)| {
+        if v.starts_with("nop") || v.starts_with("jmp") {
+            match compute_acc(instructions, 0, idx, HashSet::new(), 0) {
+                Ok(v) => Some(v),
+                Err(_) => acc
+            }
+        } else { acc }
     })
 }
 
