@@ -1,3 +1,29 @@
+fn part2(input: &str) -> (i32, i32, i32, i32) {
+    input
+        .split("\n")
+        .filter(|str| !str.is_empty())
+        .fold((0, 0, 10, 1), |(x, y, wx, wy), line| {
+            let (c, rest): (&str, &str) = line.split_at(1);
+            let value = rest.parse::<i32>().unwrap();
+            match c {
+                "N" => (x, y, wx, wy + value),
+                "S" => (x, y, wx, wy - value),
+                "E" => (x, y, wx + value, wy),
+                "W" => (x, y, wx - value, wy),
+                "L" | "R" => {
+                    let rads = (if c == "R" { - value } else { value } as f64).to_radians();
+                    let rcos = rads.cos() as i32;
+                    let rsin = rads.sin() as i32;
+                    (x, y, wx * rcos - wy * rsin, wx * rsin + wy * rcos)
+                },
+                "F" => {
+                    (x + value * wx, y + value * wy, wx, wy)
+                },
+                _ => panic!("unknown command {}", c),
+            }
+        })
+}
+
 fn main() {
     let input = std::fs::read_to_string("inputs/input12").unwrap();
 
@@ -25,4 +51,8 @@ fn main() {
         });
 
     println!("coordinates {}", x.abs() + y.abs());
+
+    let (x1, y1, _, _) = part2(&input);
+
+    println!("coordinates part 2 {}", x1.abs() + y1.abs());
 }
