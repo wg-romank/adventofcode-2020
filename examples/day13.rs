@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use itertools::FoldWhile::{Done, Continue};
 
 fn main() {
     let input = std::fs::read_to_string("inputs/input13").unwrap();
@@ -27,11 +28,13 @@ fn main() {
         .map(|&(idx, b)| ((b - (idx as u64 % b)) % b, b))
         .sorted_by(|a, b| b.1.cmp(&a.1))
         .fold((0, 1), |(acc, v): (u64, u64), (ai, ni): (u64, u64)| {
-            let mut i = 1;
-            while (acc + i * v) % ni != ai {
-                i += 1;
-            };
-            (acc + i * v, v * ni)
+            // a bit obscure but cps indeed
+            let new_acc = (1..).fold_while(acc, |ac, _| {
+                let x = (ac + v);
+                if x % ni == ai { Done(x) } else { Continue(x) }
+            }).into_inner();
+
+            (new_acc, v * ni)
         });
     println!("result2 {:#?}", result_p2);
 }
