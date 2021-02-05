@@ -34,11 +34,7 @@ fn main() {
     let r = (*ids.first().unwrap() .. *ids.last().unwrap());
     let idd = ids.into_iter().collect::<HashSet<u16>>();
 
-    // todo: move acc instead of mutating
-    let missing = r.fold(Vec::<u16>::new(), |mut acc, m| {
-        if !idd.contains(&m) { acc.push(m) };
-        acc
-    });
+    let missing = r.filter(|m| !idd.contains(&m)).collect::<Vec<u16>>();
 
     println!("my id {:#?}", missing);
 }

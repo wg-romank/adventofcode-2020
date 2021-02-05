@@ -8,6 +8,7 @@ fn main() {
         .flat_map(FromStr::from_str)
         .collect::<Vec<u32>>();
 
+    // todo: cps?
     for &i in inputs.iter() {
         for &j in inputs.iter() {
             if i + j == 2020 {

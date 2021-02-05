@@ -22,6 +22,7 @@ fn compute_acc(instructions: &Vec<&str>, idx: usize, swap_idx: usize, mut visite
     } else {
         visited.insert(idx);
         let (next_idx, next_acc) = match instructions[idx] {
+            // todo: oneliner?
             x if x.starts_with("nop") => if idx != swap_idx { nop(x, idx, ac) } else { jmp(x, idx, ac) },
             x if x.starts_with("acc") => acc(x, idx, ac),
             x if x.starts_with("jmp") => if idx != swap_idx { jmp(x, idx, ac) } else { nop(x, idx, ac) },
