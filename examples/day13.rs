@@ -29,10 +29,10 @@ fn main() {
         .sorted_by(|a, b| b.1.cmp(&a.1))
         .fold((0, 1), |(acc, v): (u64, u64), (ai, ni): (u64, u64)| {
             // a bit obscure but cps indeed
-            let new_acc = (1..).fold_while(acc, |ac, _| {
-                let x = (ac + v);
-                if x % ni == ai { Done(x) } else { Continue(x) }
-            }).into_inner();
+            let new_acc = (1..).fold_while(acc, |ac, _|
+                if ac % ni == ai { Done(ac) }
+                else { Continue(ac + v) }
+            ).into_inner();
 
             (new_acc, v * ni)
         });
