@@ -5,6 +5,7 @@ enum Seat {
     Floor,
 }
 
+// todo: part2
 fn neighboors(i: usize, j: usize, max_i: usize, max_j: usize) -> Vec<(usize, usize)> {
     let ii = i as i32;
     let jj = j as i32;

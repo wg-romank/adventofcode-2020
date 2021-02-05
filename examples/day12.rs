@@ -1,3 +1,5 @@
+// todo: refactor a bit
+
 fn part2(input: &str) -> (i32, i32, i32, i32) {
     input
         .split("\n")

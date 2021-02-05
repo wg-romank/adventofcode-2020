@@ -5,6 +5,7 @@ fn can_connect(jolt1: u32, jolt2: u32) -> bool {
     (jolt1 as i32 - jolt2 as i32).abs() <= 3
 }
 
+// todo: do not count subtrees multiple times
 fn count_ways(adapters: &[u32], idx: usize, target_joltage: u32) -> u32 {
     if can_connect(adapters[idx], target_joltage) { 1 }
     else {
