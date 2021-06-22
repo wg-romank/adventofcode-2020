@@ -58,7 +58,7 @@ fn update(field: &mut Vec<Vec<Seat>>, updates: Vec<(usize, usize, Seat)>) {
 fn play(mut field: Vec<Vec<Seat>>) -> usize {
     loop {
         let updates = step(&field);
-        // display(&field);
+        display(&field);
         if updates.len() == 0 {
             break;
         }
@@ -88,7 +88,7 @@ fn display(field: &Vec<Vec<Seat>>) {
 fn main() {
     let inputs = std::fs::read_to_string("inputs/input11").unwrap();
 
-    let mut field = inputs
+    let field = inputs
         .split('\n')
         .filter(|str| !str.is_empty())
         .map(|str| {

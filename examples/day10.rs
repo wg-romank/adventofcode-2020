@@ -1,5 +1,4 @@
 use itertools::Itertools;
-use std::collections::HashSet;
 
 fn can_connect(jolt1: u32, jolt2: u32) -> bool {
     (jolt1 as i32 - jolt2 as i32).abs() <= 3

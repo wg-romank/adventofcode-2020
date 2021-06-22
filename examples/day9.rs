@@ -1,4 +1,4 @@
-use itertools::{max, Itertools};
+use itertools::Itertools;
 
 fn find_invalid(items: &Vec<u64>, k: usize) -> Option<u64> {
     items[k..]

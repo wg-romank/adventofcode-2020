@@ -1,5 +1,3 @@
-use std::sync::mpsc::RecvTimeoutError::Timeout;
-
 #[derive(PartialEq)]
 enum Tile {
     Tree,
@@ -32,13 +30,13 @@ impl Field {
 
     fn move_slope(&self, times_r: usize, times_d: usize) -> u32 {
         let mut trees_met = 0;
-        let mut indexI = 0;
-        let mut indexJ = 0;
+        let mut index_i = 0;
+        let mut index_j = 0;
 
-        while indexI != self.field.len() - 2 {
-            indexJ = (indexJ + times_r) % self.field[indexI].len();
-            indexI = (indexI + times_d) % self.field.len();
-            if self.field[indexI][indexJ] == Tile::Tree {
+        while index_i != self.field.len() - 2 {
+            index_j = (index_j + times_r) % self.field[index_i].len();
+            index_i = (index_i + times_d) % self.field.len();
+            if self.field[index_i][index_j] == Tile::Tree {
                 trees_met += 1;
             }
         }
