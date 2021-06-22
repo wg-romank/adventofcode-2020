@@ -4,7 +4,7 @@ use std::sync::mpsc::RecvTimeoutError::Timeout;
 #[derive(Clone, PartialEq)]
 enum TileColor {
     White,
-    Black
+    Black,
 }
 
 impl TileColor {
@@ -35,15 +35,11 @@ enum Direction {
 
 impl Direction {
     fn preprocess_directions(directions: &str) -> String {
-        directions.replace(
-            "se", "!"
-        ).replace(
-            "sw", "@"
-        ).replace(
-            "nw", "#"
-        ).replace(
-            "ne", "$"
-        )
+        directions
+            .replace("se", "!")
+            .replace("sw", "@")
+            .replace("nw", "#")
+            .replace("ne", "$")
     }
 
     fn from_char(c: char) -> Direction {
@@ -68,16 +64,14 @@ impl CubeCoordinates {
 
     fn move_to(&self, direction: &Direction) -> CubeCoordinates {
         use Direction::*;
-        CubeCoordinates::new(
-            match direction {
-                E => (self.x + 1, self.y - 1, self.z),
-                SE => (self.x, self.y - 1, self.z + 1),
-                SW => (self.x - 1, self.y, self.z + 1),
-                W => (self.x - 1, self.y + 1, self.z),
-                NW => (self.x, self.y + 1, self.z - 1),
-                NE => (self.x + 1, self.y, self.z - 1),
-            }
-        )
+        CubeCoordinates::new(match direction {
+            E => (self.x + 1, self.y - 1, self.z),
+            SE => (self.x, self.y - 1, self.z + 1),
+            SW => (self.x - 1, self.y, self.z + 1),
+            W => (self.x - 1, self.y + 1, self.z),
+            NW => (self.x, self.y + 1, self.z - 1),
+            NE => (self.x + 1, self.y, self.z - 1),
+        })
     }
 
     fn neighbours(&self) -> Vec<CubeCoordinates> {
@@ -89,20 +83,25 @@ impl CubeCoordinates {
     }
 }
 
-fn convay(visited_tiles: HashMap<CubeCoordinates, TileColor>) -> HashMap<CubeCoordinates, TileColor>{
-    let mut result= visited_tiles.iter().fold(HashMap::new()|acc, (c, tile)| {
-       if *tile == TileColor::Black {
-           acc.insert(c, tile)
-       } else {
-           acc
-       }
-    });
+fn convay(
+    visited_tiles: HashMap<CubeCoordinates, TileColor>,
+) -> HashMap<CubeCoordinates, TileColor> {
+    let mut result = visited_tiles.iter().fold(
+        HashMap::new() | acc,
+        (c, tile) | {
+            if *tile == TileColor::Black {
+                acc.insert(c, tile)
+            } else {
+                acc
+            }
+        },
+    );
 
     let mut pool = HashMap::new();
     let mut seen = HashSet::new();
 
     while !pool.is_empty() {
-        let black_neighbours=  coordinates
+        let black_neighbours = coordinates
             .neighbours()
             .iter()
             .flat_map(|n| visited_tiles.get(n).or(Some(&TileColor::White)))
@@ -110,8 +109,20 @@ fn convay(visited_tiles: HashMap<CubeCoordinates, TileColor>) -> HashMap<CubeCoo
             .count();
 
         let new_tile_color = match color {
-            TileColor::Black => if black_neighbours == 0 || black_neighbours > 2 { TileColor::White } else { TileColor::Black },
-            TileColor::White => if black_neighbours == 2 { TileColor::Black } else { TileColor::White },
+            TileColor::Black => {
+                if black_neighbours == 0 || black_neighbours > 2 {
+                    TileColor::White
+                } else {
+                    TileColor::Black
+                }
+            }
+            TileColor::White => {
+                if black_neighbours == 2 {
+                    TileColor::Black
+                } else {
+                    TileColor::White
+                }
+            }
         };
 
         result.insert(coordinates.clone(), new_tile_color);
@@ -131,10 +142,9 @@ fn main() {
 
         let cur = processed
             .chars()
-            .fold(
-                CubeCoordinates::new((0, 0, 0)),
-                |acc, c| acc.move_to(&Direction::from_char(c))
-            );
+            .fold(CubeCoordinates::new((0, 0, 0)), |acc, c| {
+                acc.move_to(&Direction::from_char(c))
+            });
 
         if let Some(color) = visited_tiles.get(&cur) {
             if *color == TileColor::Black {

@@ -18,7 +18,7 @@ fn baby_step_giant_step(beta: u64, a: u64, n: u64) -> u64 {
     let mut gamma = beta; // member of the group
     for i in 0..m {
         if let Some(j) = lookup.get(&gamma) {
-            return (i * m + j) % n
+            return (i * m + j) % n;
         }
 
         gamma = (gamma * a_m) % n;
@@ -26,7 +26,6 @@ fn baby_step_giant_step(beta: u64, a: u64, n: u64) -> u64 {
 
     panic!("Not found exponent for {}", beta);
 }
-
 
 fn main() {
     let subj = 7;

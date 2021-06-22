@@ -11,9 +11,7 @@ impl<'a> CanContain<'a> {
     fn from_str(str: &'a str) -> Option<Self> {
         let (amount_raw, color_raw): (&str, &str) = str.splitn(2, ' ').next_tuple()?;
         let amount = amount_raw.parse::<u8>().ok()?;
-        let color = color_raw
-            .trim_end_matches(" bags")
-            .trim_end_matches(" bag");
+        let color = color_raw.trim_end_matches(" bags").trim_end_matches(" bag");
 
         Some(CanContain { color, amount })
     }
@@ -30,24 +28,23 @@ impl<'a> RuleSet<'a> {
             rules: rules_raw
                 .split('\n')
                 .filter(|str| !str.is_empty())
-                .flat_map(
-                    |str| {
-                        let (color, contain) = str
-                            .split("bags contain")
-                            .map(|str| str.trim())
-                            .next_tuple()?;
+                .flat_map(|str| {
+                    let (color, contain) = str
+                        .split("bags contain")
+                        .map(|str| str.trim())
+                        .next_tuple()?;
 
-                        let can_contain = contain
-                            .split(&[',', '.'][..])
-                            .map(|str| str.trim())
-                            .filter(|str| !str.is_empty())
-                            .filter(|str| !str.starts_with("no"))
-                            .flat_map(CanContain::from_str)
-                            .collect::<Vec<CanContain>>();
+                    let can_contain = contain
+                        .split(&[',', '.'][..])
+                        .map(|str| str.trim())
+                        .filter(|str| !str.is_empty())
+                        .filter(|str| !str.starts_with("no"))
+                        .flat_map(CanContain::from_str)
+                        .collect::<Vec<CanContain>>();
 
-                        Some((color, can_contain))
-                    })
-                .collect()
+                    Some((color, can_contain))
+                })
+                .collect(),
         }
     }
 }
@@ -56,26 +53,24 @@ fn find_can_contain<'a>(rule_set: &RuleSet<'a>, color: &str) -> Vec<&'a str> {
     rule_set
         .rules
         .iter()
-        .filter(
-            |(_, r)|
-                r.iter().filter(|&c| c.color == color).count() > 0)
+        .filter(|(_, r)| r.iter().filter(|&c| c.color == color).count() > 0)
         .map(|(&color, _)| color)
         .collect::<Vec<&str>>()
 }
 
-fn find_ways<'a>(rule_set: &'a RuleSet<'a>, color: &str, outer_colors: HashSet<&'a str>) -> HashSet<&'a str> {
+fn find_ways<'a>(
+    rule_set: &'a RuleSet<'a>,
+    color: &str,
+    outer_colors: HashSet<&'a str>,
+) -> HashSet<&'a str> {
     let ways = find_can_contain(rule_set, color);
     if ways.len() == 0 {
         outer_colors
     } else {
-        let new_outer_colors: HashSet<&str> = outer_colors
-            .iter()
-            .chain(ways.iter())
-            .map(|&c| c)
-            .collect();
+        let new_outer_colors: HashSet<&str> =
+            outer_colors.iter().chain(ways.iter()).map(|&c| c).collect();
 
-        ways
-            .iter()
+        ways.iter()
             .map(|&c| find_ways(rule_set, c, new_outer_colors.clone()))
             .fold(HashSet::new(), |acc, n| acc.union(&n).copied().collect())
     }
@@ -87,7 +82,8 @@ fn find_bags_to_stuff_in<'a>(rule_set: &RuleSet, color: &str) -> u32 {
             inner
                 .iter()
                 .map(|cc| cc.amount as u32 * find_bags_to_stuff_in(rule_set, cc.color))
-                .sum::<u32>() + 1
+                .sum::<u32>()
+                + 1
         } else {
             1
         }

@@ -4,10 +4,11 @@ fn count_answers(blank: &str) -> u32 {
     blank
         .split('\n')
         .flat_map(|str| str.chars())
-        .fold(HashSet::new(), |mut acc, next|{
+        .fold(HashSet::new(), |mut acc, next| {
             acc.insert(next);
             acc
-        }).len() as u32
+        })
+        .len() as u32
 }
 
 fn count_answers2(blank: &str) -> u32 {
@@ -19,7 +20,9 @@ fn count_answers2(blank: &str) -> u32 {
             None => Some(next),
             // todo: without copied?
             Some(p) => Some(p.intersection(&next).copied().collect()),
-        }).map(|s| s.len() as u32).unwrap()
+        })
+        .map(|s| s.len() as u32)
+        .unwrap()
 }
 
 fn main() {
@@ -29,7 +32,7 @@ fn main() {
         .split("\n\n")
         .filter(|s| !s.is_empty())
         .map(|blank| (count_answers(blank), count_answers2(blank)))
-        .fold((0, 0), |(y1, y2), (n1, n2)| { ( y1 + n1, y2 + n2) });
+        .fold((0, 0), |(y1, y2), (n1, n2)| (y1 + n1, y2 + n2));
 
     println!("total yes {:#?}", total_yes);
 }

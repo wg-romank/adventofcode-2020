@@ -1,20 +1,25 @@
-use itertools::{Itertools, max};
+use itertools::{max, Itertools};
 
 fn find_invalid(items: &Vec<u64>, k: usize) -> Option<u64> {
-    items[k..].iter().fold(
-        (Vec::from(&items[..k][..]), None), |(mut prev, acc), &next| {
-            let x = prev
-                .iter()
-                .combinations(2)
-                .any(|c| c.iter().map(|&&c| c).sum::<u64>() == next);
-            if x {
-                prev.remove(0);
-                prev.push(next);
-                (prev, acc)
-            } else {
-                (prev, acc.or(Some(next)))
-            }
-        }).1
+    items[k..]
+        .iter()
+        .fold(
+            (Vec::from(&items[..k][..]), None),
+            |(mut prev, acc), &next| {
+                let x = prev
+                    .iter()
+                    .combinations(2)
+                    .any(|c| c.iter().map(|&&c| c).sum::<u64>() == next);
+                if x {
+                    prev.remove(0);
+                    prev.push(next);
+                    (prev, acc)
+                } else {
+                    (prev, acc.or(Some(next)))
+                }
+            },
+        )
+        .1
 }
 
 fn find_contigeous(items: &Vec<u64>, num: u64) -> u64 {
@@ -34,7 +39,7 @@ fn find_contigeous(items: &Vec<u64>, num: u64) -> u64 {
                 break;
             }
         }
-    };
+    }
     panic!("did not find matching set of values")
 }
 

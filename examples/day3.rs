@@ -3,7 +3,7 @@ use std::sync::mpsc::RecvTimeoutError::Timeout;
 #[derive(PartialEq)]
 enum Tile {
     Tree,
-    Free
+    Free,
 }
 
 impl Tile {
@@ -11,7 +11,7 @@ impl Tile {
         match c {
             '#' => Tile::Tree,
             '.' => Tile::Free,
-            _ => panic!("Invalid tile descriptor {}", c)
+            _ => panic!("Invalid tile descriptor {}", c),
         }
     }
 }
@@ -22,9 +22,10 @@ struct Field {
 
 impl Field {
     fn new(strings: Vec<&str>) -> Self {
-        let field = strings.into_iter().map(|str|
-            str.chars().map(Tile::from_char).collect::<Vec<Tile>>()
-        ).collect::<Vec<Vec<Tile>>>();
+        let field = strings
+            .into_iter()
+            .map(|str| str.chars().map(Tile::from_char).collect::<Vec<Tile>>())
+            .collect::<Vec<Vec<Tile>>>();
 
         Field { field }
     }
@@ -40,12 +41,11 @@ impl Field {
             if self.field[indexI][indexJ] == Tile::Tree {
                 trees_met += 1;
             }
-        };
+        }
 
         trees_met
     }
 }
-
 
 fn main() {
     let input = std::fs::read_to_string("inputs/input3").unwrap();
@@ -61,5 +61,8 @@ fn main() {
     let trees_1_2 = f.move_slope(1, 2);
 
     println!("Trees met {}", trees_3_1);
-    println!("All trees met {}", trees_3_1 * trees_1_1 * trees_5_1 * trees_7_1 * trees_1_2);
+    println!(
+        "All trees met {}",
+        trees_3_1 * trees_1_1 * trees_5_1 * trees_7_1 * trees_1_2
+    );
 }

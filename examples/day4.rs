@@ -8,11 +8,21 @@ enum Height {
 impl Height {
     fn from_str(str: &str) -> Option<Self> {
         // todo: get rid of String
-        let value = str.chars().take_while(|c| c.is_ascii_digit()).collect::<String>().parse::<u16>().ok()?;
-        match str.chars().skip_while(|c| c.is_ascii_digit()).collect::<String>().as_str() {
+        let value = str
+            .chars()
+            .take_while(|c| c.is_ascii_digit())
+            .collect::<String>()
+            .parse::<u16>()
+            .ok()?;
+        match str
+            .chars()
+            .skip_while(|c| c.is_ascii_digit())
+            .collect::<String>()
+            .as_str()
+        {
             "cm" if value >= 150 && value <= 193 => Some(Height::Cm(value)),
             "in" if value >= 59 && value <= 76 => Some(Height::Inches(value)),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -43,7 +53,6 @@ impl IssueYear {
             .map(IssueYear)
     }
 }
-
 
 struct ExpireYear(u16);
 
@@ -88,7 +97,7 @@ impl EyeColor {
             "grn" => Some(Grn),
             "hzl" => Some(Hzl),
             "oth" => Some(Oth),
-            _ => None
+            _ => None,
         }
     }
 }
@@ -129,18 +138,17 @@ impl<'a> Passport<'a> {
     }
 
     fn is_valid(&self) -> bool {
-        self.byr.is_some() &&
-            self.iyr.is_some() &&
-            self.eyr.is_some() &&
-            self.hgt.is_some() &&
-            self.hcl.is_some() &&
-            self.ecl.is_some() &&
-            self.pid.is_some()
+        self.byr.is_some()
+            && self.iyr.is_some()
+            && self.eyr.is_some()
+            && self.hgt.is_some()
+            && self.hcl.is_some()
+            && self.ecl.is_some()
+            && self.pid.is_some()
     }
 
     fn from_new_line(l: &'a str) -> Self {
-        l
-            .split(&[' ', '\n'][..])
+        l.split(&[' ', '\n'][..])
             .filter(|s| !s.is_empty())
             .fold(Passport::new(), |mut p, next| {
                 // todo: fix unwrap
@@ -161,7 +169,7 @@ impl<'a> Passport<'a> {
             })
     }
 
-    fn from_lines(lines: impl Iterator<Item=&'a str>) -> Vec<Passport<'a>> {
+    fn from_lines(lines: impl Iterator<Item = &'a str>) -> Vec<Passport<'a>> {
         lines.into_iter().map(Passport::from_new_line).collect()
     }
 }
