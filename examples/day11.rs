@@ -1,3 +1,7 @@
+use itertools::FoldWhile::Continue;
+use itertools::FoldWhile::Done;
+use itertools::Itertools;
+
 #[derive(Debug, PartialEq)]
 enum Seat {
     Occupied,
@@ -6,46 +10,53 @@ enum Seat {
 }
 
 // todo: part2
-fn neighboors(i: usize, j: usize, max_i: usize, max_j: usize) -> Vec<(usize, usize)> {
-    let ii = i as i32;
-    let jj = j as i32;
+fn directions() -> Vec<fn(i64, i64) -> (i64, i64)> {
     vec![
-        (ii + 1, jj),
-        (ii - 1, jj),
-        (ii, jj + 1),
-        (ii, jj - 1),
-        (ii + 1, jj + 1),
-        (ii + 1, jj - 1),
-        (ii - 1, jj + 1),
-        (ii - 1, jj - 1),
+        |ii, jj| { (ii + 1, jj) },
+        |ii, jj| { (ii - 1, jj) },
+        |ii, jj| { (ii, jj + 1) },
+        |ii, jj| { (ii, jj - 1) },
+        |ii, jj| { (ii + 1, jj + 1) },
+        |ii, jj| { (ii + 1, jj - 1) },
+        |ii, jj| { (ii - 1, jj + 1) },
+        |ii, jj| { (ii - 1, jj - 1) },
     ]
-    .iter()
-    .filter(|(i, j)| *i >= 0 && *i < max_i as i32 && *j >= 0 && *j < max_j as i32)
-    .map(|(i, j)| (*i as usize, *j as usize))
-    .collect()
 }
 
-fn step(field: &Vec<Vec<Seat>>) -> Vec<(usize, usize, Seat)> {
+fn neighboors_pt1(ii: usize, jj: usize, max_i: usize, max_j: usize) -> impl Iterator<Item=(usize, usize)> {
+    directions()
+        .into_iter()
+        .map(move |f| f(ii as i64, jj as i64))
+        .filter(move |(i, j)| *i >= 0 && *i < max_i as i64 && *j >= 0 && *j < max_j as i64)
+        .map(|(i, j)| (i as usize, j as usize))
+}
+
+fn step<I: Iterator<Item=(usize, usize)>>(field: &Vec<Vec<Seat>>, neighboors_fn: fn(usize, usize, usize, usize) -> I) -> Vec<(usize, usize, Seat)> {
     field
         .iter()
         .enumerate()
         .flat_map(move |(idx, row)| {
             row.iter().enumerate().flat_map(move |(idx2, _el)| {
-                let neighboors: Vec<(usize, usize)> = neighboors(idx, idx2, field.len(), row.len());
-                let ocn = neighboors
-                    .into_iter()
-                    .map(|(i, j)| match field[i][j] {
-                        Seat::Occupied => 1,
-                        _ => 0,
-                    })
-                    .sum::<u32>();
-
-                match (ocn, &field[idx][idx2]) {
-                    (0, Seat::Free) => Some((idx, idx2, Seat::Occupied)),
-                    (x, Seat::Occupied) if x >= 4 => Some((idx, idx2, Seat::Free)),
-                    (_, Seat::Floor) => None,
-                    _ => None,
-                }
+                match field[idx][idx2] {
+                    Seat::Floor => None,
+                    Seat::Free => {
+                        // check if 0 neighboors
+                        neighboors_fn(idx, idx2, field.len(), row.len())
+                            .into_iter()
+                            .fold_while(Some((idx, idx2, Seat::Occupied)), |acc, (i, j)|
+                                if field[i][j] == Seat::Occupied { Done(None) } else { Continue(acc) }
+                            ).into_inner()
+                        },
+                    Seat::Occupied => {
+                        // check if at least 4 neighboors
+                        neighboors_fn(idx, idx2, field.len(), row.len())
+                            .into_iter()
+                            .fold_while((0, None), |(acc, _), (i, j)| {
+                                let new_acc = if field[i][j] == Seat::Occupied { acc + 1 } else { acc };
+                                if new_acc >= 4 { Done((0, Some((idx, idx2, Seat::Free)))) } else { Continue((new_acc, None))}
+                            }).into_inner().1
+                    }
+                } 
             })
         })
         .collect()
@@ -57,7 +68,7 @@ fn update(field: &mut Vec<Vec<Seat>>, updates: Vec<(usize, usize, Seat)>) {
 
 fn play(mut field: Vec<Vec<Seat>>) -> usize {
     loop {
-        let updates = step(&field);
+        let updates = step(&field, neighboors_pt1);
         display(&field);
         if updates.len() == 0 {
             break;
