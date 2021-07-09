@@ -40,7 +40,7 @@ To make above true, all computations must be `(mod n)` obviously. With last obst
 
 ```rust
 fn baby_step_giant_step(beta: u64, a: u64, n: u64) -> u64 {
-    let m = (n as f64).sqrt().ceil() as u64;
+    let m = (n as f64).sqrt().ceil() as u64; // modulus is group order
 
     let lookup = (0..m)
         .map(|j| (mod_exp(a, j, n), j))
@@ -48,16 +48,16 @@ fn baby_step_giant_step(beta: u64, a: u64, n: u64) -> u64 {
 
     let a_m = mod_exp(a, m * (n - 2), n);
 
-    let mut gamma = beta;
-    for i in 0..m {
-        if let Some(j) = lookup.get(&gamma) {
-            return (i * m + j) % n
-        }
-
-        gamma = (gamma * a_m) % n;
-    }
-
-    panic!("Not found exponent for {}", beta);
+    (0..m)
+        .fold_while(beta, |gamma, i| {
+            if let Some(j) = lookup.get(&gamma) {
+                Done((i * m + j) % n)
+            } else {
+                Continue((gamma * a_m) % n)
+            }
+        })
+        .into_inner()
+}
 ```
 
 References

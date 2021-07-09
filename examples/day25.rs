@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+use itertools::FoldWhile::{Continue, Done};
+use itertools::Itertools;
+
 use mod_exp::mod_exp;
 
 fn baby_step_giant_step(beta: u64, a: u64, n: u64) -> u64 {
@@ -15,16 +18,15 @@ fn baby_step_giant_step(beta: u64, a: u64, n: u64) -> u64 {
     // https://en.wikipedia.org/wiki/Fermat%27s_little_theorem
     let a_m = mod_exp(a, m * (n - 2), n);
 
-    let mut gamma = beta; // member of the group
-    for i in 0..m {
-        if let Some(j) = lookup.get(&gamma) {
-            return (i * m + j) % n;
-        }
-
-        gamma = (gamma * a_m) % n;
-    }
-
-    panic!("Not found exponent for {}", beta);
+    (0..m)
+        .fold_while(beta, |gamma, i| {
+            if let Some(j) = lookup.get(&gamma) {
+                Done((i * m + j) % n)
+            } else {
+                Continue((gamma * a_m) % n)
+            }
+        })
+        .into_inner()
 }
 
 fn main() {
