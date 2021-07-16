@@ -25,8 +25,8 @@ impl Memory {
                 let (mask_0, mask_1) = x.trim_start_matches("mask = ").chars().fold(
                     (1_u64, 1_u64),
                     |(acc0, acc1), c| match c {
-                        '1' => (acc0 << 1 | 0b1, acc1 << 1 | 0b0),
-                        '0' => (acc0 << 1 | 0b0, acc1 << 1 | 0b1),
+                        '1' => (acc0 << 1 | 0b1, acc1 << 1),
+                        '0' => (acc0 << 1, acc1 << 1 | 0b1),
                         'X' => (acc0 << 1 | 0b1, acc1 << 1 | 0b1),
                         _ => (acc0, acc1),
                     },
@@ -38,32 +38,31 @@ impl Memory {
                 }
             }
             x if x.starts_with("mem") => {
-                let (l, r) = x.split("=").map(|str| str.trim()).next_tuple().unwrap();
-                let address = l
-                    .trim_start_matches("mem[")
-                    .trim_end_matches("]")
-                    .parse::<u64>()
-                    .unwrap();
-                let value = r.parse::<u64>().unwrap();
+                x.split('=').map(|str| str.trim()).next_tuple().iter().fold(
+                    self,
+                    |mut mem, (l, r)| {
+                        let address = l
+                            .trim_start_matches("mem[")
+                            .trim_end_matches(']')
+                            .parse::<u64>()
+                            .unwrap();
+                        let value = r.parse::<u64>().unwrap();
 
-                let mut mem = self.mem.to_owned();
-                let modified = value & self.mask_0 | !self.mask_1 ^ Memory::PAD;
-                mem.insert(address, modified);
-
-                Memory { mem, ..self }
+                        let modified = value & mem.mask_0 | !mem.mask_1 ^ Memory::PAD;
+                        mem.mem.insert(address, modified);
+                        mem
+                    },
+                )
             }
-            _ => panic!("unknown command {}", command),
+            _ => self,
         }
     }
 }
 
 fn main() {
-    let inputs = std::fs::read_to_string("inputs/input14").unwrap();
+    let inputs = std::fs::read_to_string("inputs/input14").expect("no input file");
 
-    let mem = inputs
-        .split('\n')
-        .filter(|c| !c.is_empty())
-        .fold(Memory::new(), |m, c| m.step(c));
+    let mem = inputs.split('\n').fold(Memory::new(), |m, c| m.step(c));
 
     println!("new mem {:#?}", mem);
 
