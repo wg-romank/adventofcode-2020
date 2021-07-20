@@ -46,22 +46,25 @@ fn neighboors_pt2(
 
     directions()
         .into_iter()
-        .cycle()  // todo: fix endless loop here
-        .scan((0, initials), move |(idx, acc), f: fn(i64, i64) -> (i64, i64)| {
-            if acc.len() > 0 {
-                let (i, j) = acc[*idx];
-                let (ii, jj) = f(i as i64, j as i64);
-                if ii >= 0 && ii < max_i as i64 && jj >= 0 && jj < max_j as i64 {
-                    acc[*idx] = (ii as usize, jj as usize);
+        .cycle() // todo: fix endless loop here
+        .scan(
+            (0, initials),
+            move |(idx, acc), f: fn(i64, i64) -> (i64, i64)| {
+                if acc.len() > 0 {
+                    let (i, j) = acc[*idx];
+                    let (ii, jj) = f(i as i64, j as i64);
+                    if ii >= 0 && ii < max_i as i64 && jj >= 0 && jj < max_j as i64 {
+                        acc[*idx] = (ii as usize, jj as usize);
+                    } else {
+                        acc.remove(*idx);
+                    }
+                    *idx = (*idx + 1) % acc.len();
+                    Some((i, j))
                 } else {
-                    acc.remove(*idx);
+                    None
                 }
-                *idx = (*idx + 1) % acc.len();
-                Some((i, j))
-            } else {
-                None
-            }
-        })
+            },
+        )
 }
 
 fn step<I: Iterator<Item = (usize, usize)>>(
@@ -117,7 +120,7 @@ fn update(field: &mut Vec<Vec<Seat>>, updates: Vec<(usize, usize, Seat)>) {
     updates.into_iter().for_each(|(i, j, s)| field[i][j] = s)
 }
 
-fn play<I: Iterator<Item=(usize, usize)>>(
+fn play<I: Iterator<Item = (usize, usize)>>(
     mut field: Vec<Vec<Seat>>,
     neighboors_fn: fn(usize, usize, usize, usize) -> I,
 ) -> usize {
@@ -173,7 +176,6 @@ fn main() {
     let occupied2 = play(field, neighboors_pt2);
     println!("occupied2 {}", occupied2);
 }
-
 
 #[test]
 fn test_neighboors_pt2() {
