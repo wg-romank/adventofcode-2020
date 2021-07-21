@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 
-fn turn(mut tid: usize, mut numbers: HashMap<usize, usize>, tid_stop: usize, mut last_spoken: usize) -> usize {
+fn turn(mut numbers: HashMap<usize, usize>, mut last_spoken: usize, tid_stop: usize) -> usize {
+    let mut tid = numbers.len() + 1;
+
     loop {
         let next_spoken = match numbers.entry(last_spoken) {
             Entry::Occupied(a) => tid - a.get(),
@@ -33,12 +35,12 @@ fn main() {
         .map(|(idx, n)| (*n, idx + 1))
         .collect::<HashMap<usize, usize>>();
 
-    // println!(
-    //     "2020th spoken {}",
-    //     turn(map.len() + 1, map, 2020, last_spoken)
-    // );
+    println!(
+        "2020th spoken {}",
+        turn(map.clone(), last_spoken, 2020)
+    );
     println!(
         "30000000th spoken {}",
-        turn(map.len() + 1, map, 30000000, last_spoken)
+        turn(map, last_spoken, 30000000)
     );
 }
