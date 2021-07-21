@@ -1,26 +1,19 @@
 use std::collections::HashMap;
+use std::collections::hash_map::Entry;
 
-fn turn(tid: usize, numbers: HashMap<usize, usize>, tid_stop: usize, last_spoken: usize) -> usize {
-    let mut tid = tid;
-    let mut last_spoken = last_spoken;
-    let mut numbers = numbers;
-
+fn turn(mut tid: usize, mut numbers: HashMap<usize, usize>, tid_stop: usize, mut last_spoken: usize) -> usize {
     loop {
-        let next_spoken = if let Some(num) = numbers.to_owned().get(&last_spoken) {
-            numbers.insert(last_spoken, tid);
-            tid - num
-        } else {
-            numbers.insert(last_spoken, tid);
-            0
+        let next_spoken = match numbers.entry(last_spoken) {
+            Entry::Occupied(a) => tid - a.get(),
+            Entry::Vacant(_) => 0,
         };
-
-        println!("{} next spoken {}", tid, next_spoken);
+        numbers.insert(last_spoken, tid);
 
         if tid == tid_stop {
             break last_spoken;
         };
 
-        tid = tid + 1;
+        tid += 1;
         last_spoken = next_spoken;
     }
 }
@@ -32,13 +25,10 @@ fn main() {
         .split(',')
         .flat_map(|n| n.parse::<usize>().ok())
         .collect::<Vec<usize>>();
-    let last_spoken = *initial_numbers.last().ok_or("no numbers").unwrap();
-
-    println!("{:?}", initial_numbers);
-    println!("last spoken {:?}", last_spoken);
+    let last_spoken = *initial_numbers.last().expect("no numbers");
 
     let map = initial_numbers[..initial_numbers.len() - 1]
-        .into_iter()
+        .iter()
         .enumerate()
         .map(|(idx, n)| (*n, idx + 1))
         .collect::<HashMap<usize, usize>>();
