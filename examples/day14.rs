@@ -1,8 +1,5 @@
 use itertools::Itertools;
-use std::cmp::Ordering;
-use std::collections::BTreeMap;
 use std::collections::HashMap;
-use std::ops::Sub;
 
 #[derive(Clone)]
 enum Command {
@@ -20,15 +17,15 @@ impl Command {
                 x.split('=')
                     .map(|str| str.trim())
                     .next_tuple()
-                    .map(|(l, r)| {
+                    .and_then(|(l, r)| {
                         let address = l
                             .trim_start_matches("mem[")
                             .trim_end_matches(']')
                             .parse::<u64>()
-                            .unwrap();
-                        let value = r.parse::<u64>().unwrap();
+                            .ok()?;
+                        let value = r.parse::<u64>().ok()?;
 
-                        Command::Mem(address, value)
+                        Some(Command::Mem(address, value))
                     })
             }
             _ => None,
@@ -53,35 +50,29 @@ impl MemoryV1 {
     }
 }
 
+#[derive(Debug)]
 struct MemoryV2 {
-    mem: BTreeMap<FloatingAddress, u64>,
+    mem: HashMap<u64, u64>,
     mask: String,
 }
 
 impl MemoryV2 {
     fn new() -> Self {
         MemoryV2 {
-            mem: BTreeMap::new(),
-            mask: String::from("000000000000000000000000000000000000"),
+            // mem: Vec::new(),
+            mem: HashMap::new(),
+            mask: format!("{:036b}", 0),
         }
     }
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd)]
+#[derive(Debug)]
 struct FloatingAddress(String);
-
-impl Ord for FloatingAddress {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.low()
-            .cmp(&other.low())
-            .then(self.high().cmp(&other.high()))
-    }
-}
 
 impl FloatingAddress {
     fn new(addr: u64, mask: &str) -> Self {
         FloatingAddress(
-            format!("{:b}", addr)
+            format!("{:036b}", addr)
                 .chars()
                 .rev()
                 .zip(mask.chars().rev())
@@ -94,54 +85,31 @@ impl FloatingAddress {
                 .chars()
                 .rev()
                 .collect(),
-            )
-    }
-    fn high(&self) -> u64 {
-        self.0.chars().fold(0, |acc, c| match c {
-            'X' | '1' => acc << 1 | 0b1,
-            '0' => acc << 1,
-            _ => acc,
-        })
-    }
-    fn low(&self) -> u64 {
-        self.0.chars().fold(0, |acc, c| match c {
-            '1' => acc << 1 | 0b1,
-            'X' | '0' => acc << 1,
-            _ => acc,
-        })
+        )
     }
 
     fn inner_addresses(&self) -> Vec<u64> {
         paths(self.0.chars(), 0)
     }
-
-    fn multiplier(&self) -> u64 {
-        (2 as u64).pow(self.0.chars().filter(|&c| c == 'X').count() as u32)
-    }
 }
 
-fn paths<T : Iterator<Item=char> + Clone>(mut it: T, acc: u64) -> Vec<u64> {
+fn paths<T: Iterator<Item = char> + Clone>(mut it: T, acc: u64) -> Vec<u64> {
     if let Some(n) = it.next() {
         match n {
             '1' => paths(it, acc << 1 | 0b1),
             '0' => paths(it, acc << 1),
             'X' => {
                 // todo: figure out oneline concat, this is pain
-                let a = paths(it.clone(), acc<< 1 | 0b1);
+                let a = paths(it.clone(), acc << 1 | 0b1);
                 let mut b = paths(it, acc << 1);
                 b.extend(&a);
                 b
-            },
+            }
             _ => vec![acc],
         }
     } else {
         vec![acc]
     }
-}
-
-impl Sub for FloatingAddress {
-    type Output = FloatingAddress;
-    fn sub(self, rhs: FloatingAddress) -> FloatingAddress { todo!() }
 }
 
 fn step_v1(mut mem: MemoryV1, command: Command) -> MemoryV1 {
@@ -176,8 +144,9 @@ fn step_v2(mut mem: MemoryV2, command: Command) -> MemoryV2 {
     match command {
         Command::Mask(mask) => MemoryV2 { mask, ..mem },
         Command::Mem(address, value) => {
-            let new_address = FloatingAddress::new(address, &mem.mask);
-            mem.mem.insert(new_address, value);
+            for a in FloatingAddress::new(address, &mem.mask).inner_addresses() {
+                mem.mem.insert(a, value);
+            }
             mem
         }
     }
@@ -187,15 +156,15 @@ fn main() {
     let inputs = std::fs::read_to_string("inputs/input14").expect("no input file");
     let commands = inputs.split('\n').flat_map(Command::from_str);
 
-    let mem = commands.clone().fold(MemoryV1::new(), |m, c| step_v1(m, c));
+    let mem = commands.clone().fold(MemoryV1::new(), step_v1);
 
     let non_zero_cells = mem.mem.iter().map(|(_, &v)| v).sum::<u64>();
 
     println!("sum {}", non_zero_cells);
 
-    let mem = commands.fold(MemoryV2::new(), |m, c| step_v2(m, c));
+    let mem_pt2 = commands.fold(MemoryV2::new(), step_v2);
 
-    let non_zero_cells_pt2 = mem.mem.iter().map(|(a, &v)| a.multiplier() * v).sum::<u64>();
+    let non_zero_cells_pt2 = mem_pt2.mem.iter().map(|(_, &v)| v).sum::<u64>();
 
     println!("sum pt2 {}", non_zero_cells_pt2);
 }
@@ -203,9 +172,6 @@ fn main() {
 #[test]
 fn test_memory_address_decoder() {
     let addr = FloatingAddress::new(26, "00000000000000000000000000000000X0XX");
-
-    assert_eq!(addr.high(), 27);
-    assert_eq!(addr.low(), 16);
 
     assert_eq!(addr.inner_addresses(), vec![16, 17, 18, 19, 24, 25, 26, 27]);
 }
