@@ -1,7 +1,3 @@
-use itertools::FoldWhile::Continue;
-use itertools::FoldWhile::Done;
-use itertools::Itertools;
-
 #[derive(Debug, PartialEq, Clone)]
 enum Seat {
     Occupied,
@@ -9,7 +5,6 @@ enum Seat {
     Floor,
 }
 
-// todo: part2
 fn directions() -> Vec<fn(i64, i64) -> (i64, i64)> {
     vec![
         |ii, jj| (ii + 1, jj),
@@ -68,55 +63,58 @@ fn neighboors_pt2(
 }
 
 fn step<I: Iterator<Item = (usize, usize)>>(
-    field: &Vec<Vec<Seat>>,
+    field: &mut Vec<Vec<Seat>>,
     neighboors_fn: fn(usize, usize, usize, usize) -> I,
     tol: usize,
-) -> Vec<(usize, usize, Seat)> {
-    field
-        .iter()
-        .enumerate()
-        .flat_map(move |(idx, row)| {
-            row.iter().enumerate().flat_map(move |(idx2, _el)| {
-                match field[idx][idx2] {
-                    Seat::Floor => None,
-                    Seat::Free => {
-                        neighboors_fn(idx, idx2, field.len(), row.len())
-                            .into_iter()
-                            .fold_while(Some((idx, idx2, Seat::Occupied)), |acc, (i, j)| {
-                                if field[i][j] == Seat::Occupied {
-                                    Done(None)
-                                } else {
-                                    Continue(acc)
-                                }
-                            })
-                            .into_inner()
+) -> usize {
+    // todo: less allocations?
+    let field_snapshot = field.clone();
+    let height = field.len();
+    let width = field[0].len();
+
+    let mut updates = 0;
+
+    for row in 0..height {
+        for col in 0..width {
+            match field_snapshot[row][col] {
+                Seat::Floor => (),
+                Seat::Free => {
+                    let mut no_occupied_neighboors = true;
+
+                    for (i, j) in neighboors_fn(row, col, height, width) {
+                        if field_snapshot[i][j] == Seat::Occupied {
+                            no_occupied_neighboors = false;
+                            break;
+                        }
                     }
-                    Seat::Occupied => {
-                        neighboors_fn(idx, idx2, field.len(), row.len())
-                            .into_iter()
-                            .fold_while((0, None), |(acc, _), (i, j)| {
-                                let new_acc = if field[i][j] == Seat::Occupied {
-                                    acc + 1
-                                } else {
-                                    acc
-                                };
-                                if new_acc >= tol {
-                                    Done((0, Some((idx, idx2, Seat::Free))))
-                                } else {
-                                    Continue((new_acc, None))
-                                }
-                            })
-                            .into_inner()
-                            .1
+
+                    if no_occupied_neighboors {
+                        field[row][col] = Seat::Occupied;
+                        updates += 1;
                     }
                 }
-            })
-        })
-        .collect()
-}
+                Seat::Occupied => {
+                    let mut occupied_neighboors = 0;
 
-fn update(field: &mut Vec<Vec<Seat>>, updates: Vec<(usize, usize, Seat)>) {
-    updates.into_iter().for_each(|(i, j, s)| field[i][j] = s)
+                    for (i, j) in neighboors_fn(row, col, height, width) {
+                        if field_snapshot[i][j] == Seat::Occupied {
+                            occupied_neighboors += 1;
+                            if occupied_neighboors >= tol {
+                                break;
+                            }
+                        }
+                    }
+
+                    if occupied_neighboors >= tol {
+                        field[row][col] = Seat::Free;
+                        updates += 1
+                    };
+                }
+            }
+        }
+    }
+
+    updates
 }
 
 fn play<I: Iterator<Item = (usize, usize)>>(
@@ -125,12 +123,13 @@ fn play<I: Iterator<Item = (usize, usize)>>(
     tol: usize,
 ) -> usize {
     loop {
-        let updates = step(&field, neighboors_fn, tol);
+        let updates = step(&mut field, neighboors_fn, tol);
+
         // display(&field);
-        if updates.len() == 0 {
+
+        if updates == 0 {
             break;
         }
-        update(&mut field, updates);
     }
 
     field
@@ -154,7 +153,7 @@ fn display(field: &Vec<Vec<Seat>>) {
 }
 
 fn main() {
-    let inputs = std::fs::read_to_string("inputs/input11").unwrap();
+    let inputs = std::fs::read_to_string("inputs/input11").expect("no input file");
 
     let field = inputs
         .split('\n')
@@ -173,8 +172,8 @@ fn main() {
     let occupied = play(field.clone(), neighboors_pt1, 4);
     println!("occupied {}", occupied);
 
-    let occupied2 = play(field, neighboors_pt2, 5);
-    println!("occupied pt2 {}", occupied2);
+    // let occupied2 = play(field, neighboors_pt2, 5);
+    // println!("occupied pt2 {}", occupied2);
 }
 
 #[test]
