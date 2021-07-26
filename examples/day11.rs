@@ -19,11 +19,13 @@ fn directions() -> Vec<fn(i64, i64) -> (i64, i64)> {
 }
 
 fn neighboors_pt1(
+    field: &Vec<Vec<Seat>>,
     ii: usize,
     jj: usize,
-    max_i: usize,
-    max_j: usize,
 ) -> impl Iterator<Item = (usize, usize)> {
+    let max_i = field.len();
+    let max_j = field[0].len();
+
     directions()
         .into_iter()
         .map(move |f| f(ii as i64, jj as i64))
@@ -32,39 +34,43 @@ fn neighboors_pt1(
 }
 
 fn neighboors_pt2(
+    field: &Vec<Vec<Seat>>,
     ii: usize,
     jj: usize,
-    max_i: usize,
-    max_j: usize,
 ) -> impl Iterator<Item = (usize, usize)> {
-    let initials = neighboors_pt1(ii, jj, max_i, max_j).collect::<Vec<(usize, usize)>>();
+    let max_i = field.len();
+    let max_j = field[0].len();
+    let mut res = vec![];
 
-    directions()
-        .into_iter()
-        .cycle() // todo: fix endless loop here
-        .scan(
-            (0, initials),
-            move |(idx, acc), f: fn(i64, i64) -> (i64, i64)| {
-                if acc.len() > 0 {
-                    let (i, j) = acc[*idx];
-                    let (ii, jj) = f(i as i64, j as i64);
-                    if ii >= 0 && ii < max_i as i64 && jj >= 0 && jj < max_j as i64 {
-                        acc[*idx] = (ii as usize, jj as usize);
-                    } else {
-                        acc.remove(*idx);
-                    }
-                    *idx = (*idx + 1) % acc.len();
-                    Some((i, j))
-                } else {
-                    None
-                }
-            },
-        )
+    for f in directions() {
+        let (mut i, mut j) = f(ii as i64, jj as i64);
+
+        while i >= 0 && i < max_i as i64 && j >= 0 && j < max_j as i64 {
+            match field[i as usize][j as usize] {
+                Seat::Occupied => {
+                    break
+                },
+                Seat::Free => {
+                    break
+                },
+                Seat::Floor => (),
+            }
+
+            let result = f(i, j);
+            i = result.0;
+            j = result.1;
+        }
+        if i >= 0 && i < max_i as i64 && j >= 0 && j < max_j as i64 {
+            res.push((i as usize, j as usize))
+        }
+    }
+
+    res.into_iter()
 }
 
 fn step<I: Iterator<Item = (usize, usize)>>(
     field: &mut Vec<Vec<Seat>>,
-    neighboors_fn: fn(usize, usize, usize, usize) -> I,
+    neighboors_fn: fn(&Vec<Vec<Seat>>,usize, usize) -> I,
     tol: usize,
 ) -> usize {
     // todo: less allocations?
@@ -81,7 +87,7 @@ fn step<I: Iterator<Item = (usize, usize)>>(
                 Seat::Free => {
                     let mut no_occupied_neighboors = true;
 
-                    for (i, j) in neighboors_fn(row, col, height, width) {
+                    for (i, j) in neighboors_fn(&field_snapshot, row, col) {
                         if field_snapshot[i][j] == Seat::Occupied {
                             no_occupied_neighboors = false;
                             break;
@@ -96,7 +102,7 @@ fn step<I: Iterator<Item = (usize, usize)>>(
                 Seat::Occupied => {
                     let mut occupied_neighboors = 0;
 
-                    for (i, j) in neighboors_fn(row, col, height, width) {
+                    for (i, j) in neighboors_fn(&field_snapshot, row, col) {
                         if field_snapshot[i][j] == Seat::Occupied {
                             occupied_neighboors += 1;
                             if occupied_neighboors >= tol {
@@ -119,7 +125,7 @@ fn step<I: Iterator<Item = (usize, usize)>>(
 
 fn play<I: Iterator<Item = (usize, usize)>>(
     mut field: Vec<Vec<Seat>>,
-    neighboors_fn: fn(usize, usize, usize, usize) -> I,
+    neighboors_fn: fn(&Vec<Vec<Seat>>, usize, usize) -> I,
     tol: usize,
 ) -> usize {
     loop {
@@ -172,8 +178,8 @@ fn main() {
     let occupied = play(field.clone(), neighboors_pt1, 4);
     println!("occupied {}", occupied);
 
-    // let occupied2 = play(field, neighboors_pt2, 5);
-    // println!("occupied pt2 {}", occupied2);
+    let occupied2 = play(field, neighboors_pt2, 5);
+    println!("occupied pt2 {}", occupied2);
 }
 
 #[test]
