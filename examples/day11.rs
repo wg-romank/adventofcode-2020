@@ -5,7 +5,9 @@ enum Seat {
     Floor,
 }
 
-fn directions() -> Vec<fn(i64, i64) -> (i64, i64)> {
+type Directions = Vec<fn(i64, i64) -> (i64, i64)>;
+
+fn directions() -> Directions {
     vec![
         |ii, jj| (ii + 1, jj),
         |ii, jj| (ii - 1, jj),
@@ -19,7 +21,7 @@ fn directions() -> Vec<fn(i64, i64) -> (i64, i64)> {
 }
 
 fn neighboors_pt1(
-    field: &Vec<Vec<Seat>>,
+    field: &[Vec<Seat>],
     ii: usize,
     jj: usize,
 ) -> impl Iterator<Item = (usize, usize)> {
@@ -34,7 +36,7 @@ fn neighboors_pt1(
 }
 
 fn neighboors_pt2(
-    field: &Vec<Vec<Seat>>,
+    field: &[Vec<Seat>],
     ii: usize,
     jj: usize,
 ) -> impl Iterator<Item = (usize, usize)> {
@@ -70,7 +72,7 @@ fn neighboors_pt2(
 
 fn step<I: Iterator<Item = (usize, usize)>>(
     field: &mut Vec<Vec<Seat>>,
-    neighboors_fn: fn(&Vec<Vec<Seat>>,usize, usize) -> I,
+    neighboors_fn: fn(&[Vec<Seat>],usize, usize) -> I,
     tol: usize,
 ) -> usize {
     // todo: less allocations?
@@ -125,7 +127,7 @@ fn step<I: Iterator<Item = (usize, usize)>>(
 
 fn play<I: Iterator<Item = (usize, usize)>>(
     mut field: Vec<Vec<Seat>>,
-    neighboors_fn: fn(&Vec<Vec<Seat>>, usize, usize) -> I,
+    neighboors_fn: fn(&[Vec<Seat>], usize, usize) -> I,
     tol: usize,
 ) -> usize {
     loop {
@@ -144,7 +146,7 @@ fn play<I: Iterator<Item = (usize, usize)>>(
         .sum()
 }
 
-fn display(field: &Vec<Vec<Seat>>) {
+fn display(field: &[Vec<Seat>]) {
     for r in field {
         for s in r {
             match s {
