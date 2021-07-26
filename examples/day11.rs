@@ -2,7 +2,7 @@ use itertools::FoldWhile::Continue;
 use itertools::FoldWhile::Done;
 use itertools::Itertools;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum Seat {
     Occupied,
     Free,
@@ -70,6 +70,7 @@ fn neighboors_pt2(
 fn step<I: Iterator<Item = (usize, usize)>>(
     field: &Vec<Vec<Seat>>,
     neighboors_fn: fn(usize, usize, usize, usize) -> I,
+    tol: usize,
 ) -> Vec<(usize, usize, Seat)> {
     field
         .iter()
@@ -79,7 +80,6 @@ fn step<I: Iterator<Item = (usize, usize)>>(
                 match field[idx][idx2] {
                     Seat::Floor => None,
                     Seat::Free => {
-                        // check if 0 neighboors
                         neighboors_fn(idx, idx2, field.len(), row.len())
                             .into_iter()
                             .fold_while(Some((idx, idx2, Seat::Occupied)), |acc, (i, j)| {
@@ -92,7 +92,6 @@ fn step<I: Iterator<Item = (usize, usize)>>(
                             .into_inner()
                     }
                     Seat::Occupied => {
-                        // check if at least 4 neighboors
                         neighboors_fn(idx, idx2, field.len(), row.len())
                             .into_iter()
                             .fold_while((0, None), |(acc, _), (i, j)| {
@@ -101,7 +100,7 @@ fn step<I: Iterator<Item = (usize, usize)>>(
                                 } else {
                                     acc
                                 };
-                                if new_acc >= 4 {
+                                if new_acc >= tol {
                                     Done((0, Some((idx, idx2, Seat::Free))))
                                 } else {
                                     Continue((new_acc, None))
@@ -123,10 +122,11 @@ fn update(field: &mut Vec<Vec<Seat>>, updates: Vec<(usize, usize, Seat)>) {
 fn play<I: Iterator<Item = (usize, usize)>>(
     mut field: Vec<Vec<Seat>>,
     neighboors_fn: fn(usize, usize, usize, usize) -> I,
+    tol: usize,
 ) -> usize {
     loop {
-        let updates = step(&field, neighboors_fn);
-        display(&field);
+        let updates = step(&field, neighboors_fn, tol);
+        // display(&field);
         if updates.len() == 0 {
             break;
         }
@@ -170,11 +170,11 @@ fn main() {
         })
         .collect::<Vec<Vec<Seat>>>();
 
-    // let occupied = play(field, neighboors_pt1);
-    // println!("occupied {}", occupied);
+    let occupied = play(field.clone(), neighboors_pt1, 4);
+    println!("occupied {}", occupied);
 
-    let occupied2 = play(field, neighboors_pt2);
-    println!("occupied2 {}", occupied2);
+    let occupied2 = play(field, neighboors_pt2, 5);
+    println!("occupied pt2 {}", occupied2);
 }
 
 #[test]
